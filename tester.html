@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Waifu Test Interface</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 2rem; }
+        .box { background: #313244; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; }
+        button { background: #cba6f7; color: #11111b; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        button:disabled { background: #585b70; cursor: not-allowed; }
+        #chatBox { background: #11111b; padding: 15px; border-radius: 5px; min-height: 100px; margin-top: 20px; white-space: pre-wrap; font-size: 1.1em; line-height: 1.5; }
+        .status { color: #a6e3a1; font-size: 0.9em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>🎙️ Alat Tes Komunikasi AI</h2>
+    <div id="connectionStatus" class="status">🔌 Menghubungkan ke Socket.IO...</div>
+    
+    <button id="btnRecord" disabled>🔴 Mulai Rekam Suara</button>
+    <button id="btnStop" disabled>⏹️ Berhenti & Kirim ke AI</button>
+    
+    <div id="chatBox">...</div>
+</div>
+
+<script>
+    const socket = io('localhost:3000');
+    let clientId = '';
+
+    socket.on('connect', () => {
+        clientId = socket.id;
+        document.getElementById('connectionStatus').innerText = `✅ Terhubung! Client ID: ${clientId}`;
+        document.getElementById('btnRecord').disabled = false;
+    });
+
+    const chatBox = document.getElementById('chatBox');
+    
+    socket.on('token_stream', (data) => {
+        if(chatBox.innerText === '...') chatBox.innerText = '';
+        chatBox.innerText += data.text + ' '; 
+    });
+
+    socket.on('audio_response', (data) => {
+        console.log("Menerima buffer audio MP3!");
+        const blob = new Blob([data.audio], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(blob);
+        const audioEl = new Audio(audioUrl);
+        audioEl.play();
+    });
+
+    socket.on('error', (data) => {
+        chatBox.innerText += `\n[ERROR]: ${data.message}`;
+    });
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    document.getElementById('btnRecord').onclick = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioChunks = [];
+            
+            const formData = new FormData();
+            formData.append('audio_file', audioBlob, 'suara-master.wav');
+            formData.append('clientid', clientId);
+            
+            chatBox.innerText = 'AI sedang berpikir...';
+            
+            try {
+                // Tembak endpoint HTTP NestJS
+                await axios.post('http://localhost:3000/chat/voice', formData);
+            } catch (err) {
+                console.error(err);
+                chatBox.innerText = "❌ Gagal mengirim audio ke server.";
+            }
+        };
+
+        mediaRecorder.start();
+        document.getElementById('btnRecord').disabled = true;
+        document.getElementById('btnRecord').innerText = '🎙️ Merekam...';
+        document.getElementById('btnStop').disabled = false;
+    };
+
+    document.getElementById('btnStop').onclick = () => {
+        mediaRecorder.stop();
+        document.getElementById('btnRecord').disabled = false;
+        document.getElementById('btnRecord').innerText = '🔴 Mulai Rekam Suara';
+        document.getElementById('btnStop').disabled = true;
+    };
+</script>
+</body>
+</html>

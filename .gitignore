@@ -1,0 +1,76 @@
+# === OS Sampah ===
+.DS_Store
+Thumbs.db
+
+# === Node.js / NestJS Backend ===
+node_modules/
+/dist
+/build
+.lerna
+
+# Logs & Diagnostic (Node.js)
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime & Temp (Node.js)
+pids
+*.pid
+*.seed
+*.pid.lock
+.temp
+.tmp
+
+# Tests
+/coverage
+/.nyc_output
+
+# === Python / FastAPI Backend ===
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+ENV/
+env/
+.venv/
+.pytest_cache/
+
+# === Database Lokal & AI Memory (RAG) ===
+*.db
+*.db-journal
+*.sqlite3
+chroma_data/
+waifu_memory.db
+
+# === Konfigurasi Rahasia (API Keys) ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# === IDE / Editor Config ===
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# IDE - VSCode (Abaikan folder .vscode, KECUALI file konfigurasi penting)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
